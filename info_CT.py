@@ -11,6 +11,8 @@ Created on Sun Nov 20 23:00:12 2022
 """
 import os
 import nibabel as nib
+import csv
+import shutil
 
 #%%
 """
@@ -58,3 +60,26 @@ for sub_id in list_sub:
         #Voxel size
         voxel_size = header.get_zooms()
         list_nifti_info.append([sub_id, image_size, voxel_size])
+        
+#%%    
+#Create file
+participants = 'participants2.csv'
+
+with open(participants, 'w', newline='') as file: 
+    #Write the file
+    writer = csv.writer(file, delimiter=';')
+    writer.writerow(['Image size', 'Voxel size',  'Slice thickness'])
+   
+    for idx, id_vector in enumerate(list_nifti_info):
+       
+        #Folder number
+        image_size = id_vector[1]
+        voxel_size = id_vector[2]
+        slice_thickness = voxel_size[2]
+        writer.writerow([image_size, voxel_size, slice_thickness])
+       
+print("Participants File Updated Successfully!")
+
+#Move file
+shutil.move(os.path.join(os.getcwd(), participants), os.path.join(work_path, participants))
+

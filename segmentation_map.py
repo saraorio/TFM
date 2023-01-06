@@ -36,6 +36,7 @@ my_dataset_path = os.path.join(work_path, my_dataset)
 """
 list_sub = os.listdir(my_dataset_path)
 nifti = 'nifti'
+nifti2 = 'nifti2'
 mask = 'mask'
 nifti_final = 'nifti_final'
 image_nifti = 'image.nii.gz'
@@ -51,24 +52,31 @@ for sub_id in list_sub:
     sub_path = os.path.join(my_dataset_path, sub_id)
     
     nifti_final_path = os.path.join(sub_path, nifti_final)
+    #if os.path.exists(nifti_final_path):
+    #    shutil.rmtree(nifti_final_path)
     if not os.path.exists(nifti_final_path):
         os.mkdir(nifti_final_path)
     nifti_path = os.path.join(sub_path, nifti)
+    nifti2_path = os.path.join(sub_path, nifti2)
     
     # Copy image.nii.gz to new folder
+    # From my_dataset\sub-001\nifti
     from_path = os.path.join(nifti_path, image_nifti)
-    to_path = os.path.join(nifti_final_path, image_nifti)
-    shutil.copyfile(from_path, to_path )
+    to_path = os.path.join(nifti_final_path, image_nifti)    
+    if not os.path.exists(to_path):
+        shutil.copyfile(from_path, to_path)
     
-    list_nifti = os.listdir(nifti_path)
+    # From my_dataset\sub-001\nifti2
+    list_nifti = os.listdir(nifti2_path)
     
-    for mask_nifti in list_nifti[1:]: #no agafem 'image.nii.gz'
+    #for mask_nifti in list_nifti[1:]: #no agafem 'image.nii.gz'
+    for mask_nifti in list_nifti:
     
         # En cas que ja haguem trobat un match, passem a la següent carpeta
         if (isPatternFound == True):
             break
         
-        from_path = os.path.join(nifti_path, mask_nifti)
+        from_path = os.path.join(nifti2_path, mask_nifti)
         to_path = os.path.join(nifti_final_path, name)
         mask_nifti = mask_nifti.lower() #passem a minuscules
         
@@ -80,7 +88,7 @@ for sub_id in list_sub:
                     isPatternFound = True
                     if not os.path.exists(to_path):
                         shutil.copyfile(from_path, to_path)
-                        break
+                        break                                               
                     else:
                         isPatternFound = False
                         
@@ -134,7 +142,7 @@ for sub_id in list_sub:
             else:
                 continue
             
-            value_segmentations[value_mask == 255] = value
+            value_segmentations[value_mask == 1] = value
     
     # Transform to 1byte (8bits)
     data = value_segmentations.copy()
@@ -143,13 +151,5 @@ for sub_id in list_sub:
     
     # Save map
     image = nib.Nifti1Image(data, affineCT)
-    nib.save(image, nifti_final_path + '/mask.nii')
-            
-                
-        
-            
-            
-        
-        
-    
+    nib.save(image, nifti_final_path + '/mask.nii')         
 

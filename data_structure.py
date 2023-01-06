@@ -13,6 +13,8 @@ import os
 import shutil
 import pydicom
 from dcmrtstruct2nii import dcmrtstruct2nii
+from DicomRTTool import DicomReaderWriter
+import SimpleITK as sitk
 import csv
 
 #%%
@@ -132,10 +134,11 @@ for idx, id_vector in enumerate(list_all):
         from_path = os.path.join(data_path, file_name)
         to_path = os.path.join(sub_path, output_file_name)
         shutil.copyfile(from_path, to_path)
-
+        
 #%%
 """
-5. Obtain CT and Segmentations in NIFTI format
+5.1. Obtain CT and Segmentations in NIFTI format
+     Version using dcmrtstruct2nii
 """
 
 #CONVERT TO NIFTI
@@ -160,6 +163,47 @@ for sub_id in list_sub:
             rt_struct = os.path.join(sub_path, rt)
             dcmrtstruct2nii(rt_struct, sub_path, nifti_path)
             print ('Conversion to NIFTI of ' + sub_id  + ' done')
-            print()
+            print ('___________________________________________________')
+            print ()
             break
+
+
+#%%
+"""
+5.2. Obtain CT and Segmentations in NIFTI format
+     Version using DicomRTTool
+"""
+
+#CONVERT TO NIFTI
+
+list_sub = os.listdir(my_dataset_path)
+nifti = 'nifti2'
+       
+for sub_id in list_sub:
+    
+    #A new folder is created inside every patient folder to save NIFTI files
+    sub_path = os.path.join(my_dataset_path, sub_id)
+    nifti_path = os.path.join(sub_path, nifti)
+    #if os.path.exists(nifti_path):
+    #    shutil.rmtree(nifti_path)
+    if not os.path.exists(nifti_path):
+        os.mkdir(nifti_path)
+    
+    #Inside every sub folder
+    reader = DicomReaderWriter()
+    reader.walk_through_folders(sub_path)
+    # To obtain image.nii.gz (too long)
+    #reader.get_images()
+    #path_image = os.path.join(nifti_path, 'image.nii.gz')
+    #sitk.WriteImage(reader.dicom_handle, path_image)
+    rois = reader.return_rois(print_rois=True)
+    for r in rois:
+        reader.set_contour_names_and_associations([r])
+        reader.get_mask()
+        mask = 'mask_' + r.replace(" ", "_") + '.nii.gz'
+        path_mask = os.path.join(nifti_path, mask)
+        sitk.WriteImage(reader.annotation_handle, path_mask)
+    print ('Conversion to NIFTI of ' + sub_id  + ' done')
+    print ('___________________________________________________')
+    print ()
 
